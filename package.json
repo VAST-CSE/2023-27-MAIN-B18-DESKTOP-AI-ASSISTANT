@@ -1,0 +1,31 @@
+{
+  "name": "rex",
+  "productName": "REX",
+  "version": "0.1.0",
+  "description": "A lightweight, cross-platform, screen-aware AI companion powered by local Ollama models.",
+  "main": "./out/main/index.js",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "package": "npm run build && electron-builder --dir && ([ \"$(uname)\" = \"Darwin\" ] && [ -d \"release/mac-arm64/REX.app\" ] && codesign --force --deep --sign - --identifier com.rex.app --requirements '=designated => identifier \"com.rex.app\"' --entitlements build/entitlements.mac.plist \"release/mac-arm64/REX.app\" || true)",
+    "dist": "npm run build && electron-builder",
+    "start:app": "nohup \"$(pwd)/release/mac-arm64/REX.app/Contents/MacOS/REX\" > /tmp/rex.log 2>&1 & echo started"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "electron": "^44.9.3",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^6.0.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.4"
+  }
+}

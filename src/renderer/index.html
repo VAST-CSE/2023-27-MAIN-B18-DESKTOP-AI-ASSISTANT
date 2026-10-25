@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' ws://localhost:* ws://127.0.0.1:* http://localhost:* http://127.0.0.1:*; object-src 'none'; base-uri 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>REX</title>
+  </head>
+  <body>
+    <div id="app">
+      <header class="titlebar">
+        <div class="brand">
+          <span class="brand-dot"></span>
+          <span class="brand-name">REX</span>
+        </div>
+        <div class="titlebar-actions">
+          <span id="hotkey-chip" class="chip">…</span>
+          <button
+            id="btn-new-chat"
+            class="icon-btn"
+            title="New chat (⌘N)"
+            aria-label="New chat"
+          >
+            ＋
+          </button>
+          <button id="btn-settings" class="icon-btn" title="Settings (⌘,)" aria-label="Settings">⚙</button>
+          <button id="btn-hide" class="icon-btn" title="Hide (Esc)" aria-label="Hide">✕</button>
+        </div>
+      </header>
+
+      <div class="statusbar">
+        <span id="status-dot" class="status-dot checking"></span>
+        <span id="status-text">Checking Ollama…</span>
+        <button id="btn-retry" class="link-btn">Retry</button>
+      </div>
+
+      <div id="banner" class="banner hidden"></div>
+
+      <main>
+        <section id="screen-card" class="screen-card hidden">
+          <img id="screen-preview" alt="Latest screenshot" />
+          <div class="screen-meta">
+            <span id="screen-label"></span>
+            <button id="btn-recapture" class="link-btn">Recapture</button>
+          </div>
+        </section>
+
+        <section id="conversation" class="conversation">
+          <div id="empty-state" class="empty-state">
+            <div class="empty-icon">◎</div>
+            <h1>Ask about anything on your screen</h1>
+            <p>
+              Press <kbd id="empty-hotkey">⌘⇧Space</kbd> and just speak — REX captures your
+              display, transcribes your voice locally, then asks your local Ollama model.
+            </p>
+            <p class="muted">
+              Voice and screenshots never leave your machine — they stay on <code>localhost</code>.
+            </p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="composer">
+        <div id="voice-bar" class="voice-bar hidden">
+          <span class="voice-dot"></span>
+          <span id="voice-label" class="voice-label">Listening…</span>
+          <span id="voice-meter" class="voice-meter" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </span>
+          <button id="btn-voice-cancel" class="link-btn">Cancel</button>
+        </div>
+        <textarea
+          id="composer"
+          rows="1"
+          placeholder="Ask about your screen — or press the hotkey and speak…"
+          spellcheck="false"
+        ></textarea>
+        <div class="composer-actions">
+          <button id="btn-voice" class="icon-btn mic-btn" title="Speak to REX" aria-label="Speak">
+            🎤
+          </button>
+          <button id="btn-stop" class="ghost hidden">Stop</button>
+          <button id="btn-ask" class="primary">Ask</button>
+        </div>
+        <div class="hint">
+          <kbd>Enter</kbd> send · <kbd>Shift</kbd>+<kbd>Enter</kbd> newline · <kbd>Esc</kbd> hide
+        </div>
+      </footer>
+
+      <aside id="drawer" class="drawer" aria-hidden="true">
+        <div class="drawer-head">
+          <h2>Settings</h2>
+          <button id="btn-close-settings" class="icon-btn" aria-label="Close settings">✕</button>
+        </div>
+
+        <div class="field">
+          <label class="label" for="btn-hotkey">Global hotkey</label>
+          <div class="inline-row">
+            <button id="btn-hotkey" class="hotkey-btn">⌘⇧Space</button>
+            <button id="btn-hotkey-reset" class="link-btn">Reset</button>
+          </div>
+          <p class="help">
+            Click the button, then press the combination you want. It needs at least one modifier,
+            or a function key (F1–F24).
+          </p>
+          <p id="hotkey-error" class="error-text hidden"></p>
+        </div>
+
+        <div class="field">
+          <label class="label" for="model-select">Ollama model</label>
+          <div class="inline-row">
+            <select id="model-select"></select>
+            <button id="btn-models-refresh" class="link-btn">Refresh</button>
+          </div>
+          <p class="help">
+            Vision models work best: <code>qwen2.5vl:3b</code>, <code>llava:7b</code>,
+            <code>gemma3:4b</code>, <code>moondream</code>.
+          </p>
+        </div>
+
+        <div class="field">
+          <label class="label" for="endpoint">Ollama endpoint</label>
+          <input id="endpoint" type="url" placeholder="http://127.0.0.1:11434" spellcheck="false" />
+        </div>
+
+        <div class="field">
+          <label class="label" for="max-width">Screenshot size sent to the model</label>
+          <select id="max-width">
+            <option value="1024">1024 px — fastest</option>
+            <option value="1280">1280 px — balanced</option>
+            <option value="1600">1600 px — sharper</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <span class="label">Keep the panel always on top</span>
+          <input id="always-on-top" type="checkbox" class="switch" />
+        </div>
+
+        <div class="row">
+          <span class="label">Voice input (local Whisper)</span>
+          <input id="voice-enabled" type="checkbox" class="switch" />
+        </div>
+        <p id="voice-status" class="help">Checking the speech engine…</p>
+
+        <div id="ollama-help" class="help-box hidden">
+          <strong>Ollama isn’t reachable</strong>
+          <ol>
+            <li>Install it from <code>ollama.com</code></li>
+            <li>Start it with <code>ollama serve</code></li>
+            <li>Pull a vision model: <code>ollama pull qwen2.5vl:3b</code></li>
+          </ol>
+          <button id="btn-help-retry" class="primary">Check again</button>
+        </div>
+
+        <div class="drawer-foot">
+          <span class="muted">REX v0.1.0 · runs fully offline</span>
+          <button id="btn-quit" class="link-btn danger">Quit</button>
+        </div>
+      </aside>
+
+      <div id="toast" class="toast hidden"></div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
